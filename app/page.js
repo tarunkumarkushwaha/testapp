@@ -3,7 +3,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { useState, useEffect } from "react";
 import Navbar from "@/components/Navbar";
 import Todo from "@/components/Todo";
-import { fetchTodos, addTodo } from "@/redux/todos/todoSlice";
+import { fetchTodos, addTodo } from "@/app/redux/todos/todoSlice";
 
 export default function Home() {
   const [item, setItem] = useState({ data: "", completed: false });

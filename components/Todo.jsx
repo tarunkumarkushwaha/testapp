@@ -1,7 +1,7 @@
 "use client"
 import React, { useState } from "react";
 import { useDispatch } from "react-redux";
-import { deletetodo, modTodo } from "@/redux/todos/todoSlice";
+import { deletetodo, modTodo } from "@/app/redux/todos/todoSlice";
 
 const Todo = ({ item, i }) => {
   const dispatch = useDispatch();
