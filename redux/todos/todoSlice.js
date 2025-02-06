@@ -1,44 +1,94 @@
 "use client";
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 
+const LOCAL_STORAGE_KEY = "tasks";
+
+const getLocalTodos = () => {
+  const storedTodos = localStorage.getItem(LOCAL_STORAGE_KEY);
+  return storedTodos ? JSON.parse(storedTodos) : [];
+};
+
+const saveLocalTodos = (todos) => {
+  localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(todos));
+};
+
 // Fetch API 
 export const fetchTodos = createAsyncThunk("todo/fetchTodos", async () => {
-  const response = await fetch("/api/tasks");
-  const data = await response.json();
-  // console.log(data)
-  return data;
+  try {
+    const response = await fetch("/api/tasks");
+    if (!response.ok) throw new Error("API failed");
+    const data = await response.json();
+    saveLocalTodos(data); 
+    return data;
+  } catch (error) {
+    return getLocalTodos(); 
+  }
 });
 
-// POST request
+// POST
 export const addTodo = createAsyncThunk("todo/addTodo", async (todo) => {
-  const response = await fetch("/api/tasks", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(todo),
-  });
-  return await response.json();
+  try {
+    const response = await fetch("/api/tasks", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(todo),
+    });
+    if (!response.ok) throw new Error("API failed");
+    const newTodo = await response.json();
+    const updatedTodos = [...getLocalTodos(), newTodo];
+    saveLocalTodos(updatedTodos);
+    return newTodo;
+  } catch (error) {
+    const localTodo = { ...todo, _id: Date.now().toString() }; 
+    const updatedTodos = [...getLocalTodos(), localTodo];
+    saveLocalTodos(updatedTodos);
+    return localTodo;
+  }
 });
 
-// PUT request
+// PUT
 export const modTodo = createAsyncThunk("todo/modTodo", async ({ id, data, completed }) => {
-  // console.log(data)
-  const response = await fetch("/api/tasks", {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ id, data, completed }),
-  });
-  return await response.json();
+  try {
+    const response = await fetch("/api/tasks", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id, data, completed }),
+    });
+    if (!response.ok) throw new Error("API failed");
+    const updatedTodo = await response.json();
+    
+    const updatedTodos = getLocalTodos().map((todo) =>
+      todo._id === id ? updatedTodo : todo
+    );
+    saveLocalTodos(updatedTodos);
+    return updatedTodo;
+  } catch (error) {
+    const updatedTodos = getLocalTodos().map((todo) =>
+      todo._id === id ? { ...todo, data, completed } : todo
+    );
+    saveLocalTodos(updatedTodos);
+    return { id, data, completed };
+  }
 });
 
-// DELETE request
+// DELETE
 export const deletetodo = createAsyncThunk("todo/deletetodo", async (id) => {
-  console.log(id,"deleted")
-  await fetch("/api/tasks", {
-    method: "DELETE",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ id }),
-  });
-  return id;
+  try {
+    const response = await fetch("/api/tasks", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id }),
+    });
+    if (!response.ok) throw new Error("API failed");
+
+    const updatedTodos = getLocalTodos().filter((todo) => todo._id !== id);
+    saveLocalTodos(updatedTodos);
+    return id;
+  } catch (error) {
+    const updatedTodos = getLocalTodos().filter((todo) => todo._id !== id);
+    saveLocalTodos(updatedTodos);
+    return id;
+  }
 });
 
 const initialState = {
@@ -95,7 +145,8 @@ const todoSlice = createSlice({
   },
 });
 
-// export const {  filterTodos} = todoSlice.actions;
+// export const { filterTodos } = todoSlice.actions;
+
 let todoreducer = todoSlice.reducer;
 
 
