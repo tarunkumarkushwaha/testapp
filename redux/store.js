@@ -5,6 +5,8 @@ import todoreducer from './todos/todoSlice'
 
 export const store = configureStore({
   reducer: {
-    TODO : todoreducer}
-  
+    TODO: todoreducer
+  },
+  devTools: process.env.NODE_ENV !== "production",
+
 })
